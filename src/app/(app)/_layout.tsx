@@ -33,7 +33,7 @@ export default function TabLayout() {
   return (
     <Tabs>
       <Tabs.Screen
-        name="Dashboard"
+        name="dashboard"
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color }) => <FeedIcon color={color} />,
@@ -44,7 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="insights"
         options={{
-          title: 'insights',
+          title: 'Insights',
           headerShown: false,
           tabBarIcon: ({ color }) => <StyleIcon color={color} />,
           tabBarButtonTestID: 'style-tab',
