@@ -10,6 +10,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform } from 'react-native';
 import { getItems, updateItem } from '@/utils/storage';
 import { deleteItem } from '@/utils/storage';
+import { getCategories, addCategory } from '@/utils/CategoryStorage';
+import { Picker } from '@react-native-picker/picker';
+
 
 
 
@@ -20,6 +23,7 @@ export default function AddEditItemScreen() {
 
     const [name, setName] = useState('');
     const [category, setCategory] = useState('');
+    const [allCategories, setAllCategories] = useState<string[]>([]);
     const [notes, setNotes] = useState('');
     const [dateAdded, setDateAdded] = useState(new Date().toISOString());
     const [photoUri, setPhotoUri] = useState<string | undefined>();
@@ -46,6 +50,14 @@ export default function AddEditItemScreen() {
         };
         loadItemIfEditing();
     }, [id]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            const list = await getCategories();
+            setAllCategories(list);
+        };
+        fetchCategories();
+    }, []);
 
     const handlePickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -106,7 +118,30 @@ export default function AddEditItemScreen() {
             <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="What is this item?" />
 
             <Text style={styles.label}>Category</Text>
-            <TextInput style={styles.input} value={category} onChangeText={setCategory} placeholder="e.g. Kitchen, Tech" />
+            <View style={styles.input}>
+                <Picker
+                    selectedValue={category}
+                    onValueChange={(val) => {
+                        if (val === 'new') {
+                            const newCat = prompt('Enter new category'); // you can use a modal instead
+                            if (newCat) {
+                                addCategory(newCat);
+                                setAllCategories((prev) => [...prev, newCat]);
+                                setCategory(newCat);
+                            }
+                        } else {
+                            setCategory(val);
+                        }
+                    }}
+                >
+                    <Picker.Item label="Select category" value="" />
+                    {allCategories.map((cat) => (
+                        <Picker.Item key={cat} label={cat} value={cat} />
+                    ))}
+                    <Picker.Item label="+ Add new category" value="new" />
+                </Picker>
+            </View>
+
 
             <Text style={styles.label}>Notes</Text>
             <TextInput
