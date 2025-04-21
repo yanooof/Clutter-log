@@ -1,7 +1,6 @@
-// app/(tabs)/usage.tsx
-import { View, Text, FlatList, StyleSheet, Button, Image } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
+import { FlatList, Text, TouchableOpacity, View, Image } from 'react-native';
 import { getItems, updateItem } from '@/utils/storage';
 import { Item } from '@/types/Item';
 
@@ -41,52 +40,43 @@ export default function UsageCheckScreen() {
     };
 
     const renderItem = ({ item }: { item: Item }) => (
-        <View style={styles.card}>
-            <Text style={styles.name}>{item.name}</Text>
-            {item.photoUri && <Image source={{ uri: item.photoUri }} style={styles.image} />}
-            <View style={styles.buttonRow}>
-                <Button title="Yes" onPress={() => handleResponse(item, 'yes')} />
-                <Button title="No" color="crimson" onPress={() => handleResponse(item, 'no')} />
+        <View className="bg-surface p-4 rounded-xl mb-4">
+            <Text className="text-text font-bold text-lg mb-1">{item.name}</Text>
+            {item.photoUri && (
+                <Image source={{ uri: item.photoUri }} className="w-full h-48 rounded-lg mb-3" />
+            )}
+            <View className="flex-row justify-between">
+                <TouchableOpacity
+                    className="bg-green-600 py-2 px-4 rounded-md"
+                    onPress={() => handleResponse(item, 'yes')}
+                >
+                    <Text className="text-white font-medium">Yes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    className="bg-red-500 py-2 px-4 rounded-md"
+                    onPress={() => handleResponse(item, 'no')}
+                >
+                    <Text className="text-white font-medium">No</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
 
     return (
-        <View style={{ flex: 1, padding: 16 }}>
+        <View className="flex-1 bg-background px-4 pt-4">
             {itemsToCheck.length === 0 ? (
-                <Text style={{ color: 'gray', textAlign: 'center' }}>No items need checking!</Text>
+                <View className="flex-1 justify-center items-center">
+                    <Text className="text-subtle">No items need checking!</Text>
+                </View>
             ) : (
                 <FlatList
                     data={itemsToCheck}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
-                    contentContainerStyle={{ gap: 12 }}
+                    contentContainerStyle={{ paddingBottom: 100 }}
                 />
             )}
         </View>
     );
 }
 
-const styles = StyleSheet.create({
-    card: {
-        backgroundColor: '#222',
-        padding: 16,
-        borderRadius: 12,
-    },
-    name: {
-        fontWeight: 'bold',
-        fontSize: 18,
-        color: 'white',
-        marginBottom: 8,
-    },
-    image: {
-        height: 160,
-        width: '100%',
-        borderRadius: 8,
-        marginBottom: 12,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-});

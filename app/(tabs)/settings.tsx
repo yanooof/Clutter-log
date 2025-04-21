@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Switch, StyleSheet, Button, Share, Alert } from 'react-native';
+import { View, Text, Switch, Alert, TouchableOpacity } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { getItems } from '@/utils/storage';
@@ -50,43 +50,35 @@ export default function SettingsScreen() {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Settings</Text>
+        <View className="flex-1 bg-background px-6 pt-6 space-y-8">
+            <Text className="text-text text-2xl font-bold">Settings</Text>
 
-            <View style={styles.row}>
-                <Text style={styles.label}>Enable Reminders</Text>
-                <Switch value={settings.remindersEnabled} onValueChange={() => toggle('remindersEnabled')} />
+            <View className="flex-row justify-between items-center">
+                <Text className="text-subtle text-lg">Enable Reminders</Text>
+                <Switch
+                    value={settings.remindersEnabled}
+                    onValueChange={() => toggle('remindersEnabled')}
+                    thumbColor={settings.remindersEnabled ? '#8AB4F8' : '#666'}
+                    trackColor={{ true: '#5F6368', false: '#3C3D3F' }}
+                />
             </View>
 
-            <View style={styles.row}>
-                <Text style={styles.label}>Secure Mode</Text>
-                <Switch value={settings.secureModeEnabled} onValueChange={() => toggle('secureModeEnabled')} />
+            <View className="flex-row justify-between items-center">
+                <Text className="text-subtle text-lg">Secure Mode</Text>
+                <Switch
+                    value={settings.secureModeEnabled}
+                    onValueChange={() => toggle('secureModeEnabled')}
+                    thumbColor={settings.secureModeEnabled ? '#8AB4F8' : '#666'}
+                    trackColor={{ true: '#5F6368', false: '#3C3D3F' }}
+                />
             </View>
 
-            <Button title="Export CSV" onPress={exportToCSV} color="#F30A14" />
+            <TouchableOpacity
+                onPress={exportToCSV}
+                className="bg-accent py-4 rounded-md items-center"
+            >
+                <Text className="text-white font-bold">Export CSV</Text>
+            </TouchableOpacity>
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 24,
-        gap: 24,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    label: {
-        fontSize: 18,
-        color: 'white',
-    },
-});
-

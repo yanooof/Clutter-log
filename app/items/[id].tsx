@@ -1,23 +1,14 @@
-import { View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, ScrollView, Alert, Platform, Modal, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import type { MediaType } from 'expo-image-picker';
-import { saveItem } from '@/utils/storage';
-import { Item } from '@/types/Item';
-import uuid from 'react-native-uuid';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Platform } from 'react-native';
-import { getItems, updateItem } from '@/utils/storage';
-import { deleteItem } from '@/utils/storage';
-import { getCategories, addCategory } from '@/utils/CategoryStorage';
 import { Picker } from '@react-native-picker/picker';
-import { Modal, Pressable } from 'react-native';
+import uuid from 'react-native-uuid';
 
-
-
-
-
+import { getItems, saveItem, updateItem, deleteItem } from '@/utils/storage';
+import { getCategories, addCategory } from '@/utils/CategoryStorage';
+import { Item } from '@/types/Item';
 
 export default function AddEditItemScreen() {
     const router = useRouter();
@@ -25,18 +16,15 @@ export default function AddEditItemScreen() {
 
     const [name, setName] = useState('');
     const [category, setCategory] = useState('');
-    const [allCategories, setAllCategories] = useState<string[]>([]);
     const [notes, setNotes] = useState('');
     const [dateAdded, setDateAdded] = useState(new Date().toISOString());
-    const [photoUri, setPhotoUri] = useState<string | undefined>();
     const [showDatePicker, setShowDatePicker] = useState(false);
-
+    const [photoUri, setPhotoUri] = useState<string | undefined>();
+    const [allCategories, setAllCategories] = useState<string[]>([]);
     const [isEditing, setIsEditing] = useState(false);
     const [existingItemId, setExistingItemId] = useState<string | null>(null);
-
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
-
 
     useEffect(() => {
         const loadItemIfEditing = async () => {
@@ -67,10 +55,9 @@ export default function AddEditItemScreen() {
 
     const handlePickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'] satisfies MediaType[], // clean & typed
+            mediaTypes: ['images'],
             quality: 0.7,
         });
-
         if (!result.canceled) {
             setPhotoUri(result.assets[0].uri);
         }
@@ -119,22 +106,32 @@ export default function AddEditItemScreen() {
     };
 
     return (
-        <>
-            <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.label}>Name</Text>
-                <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="What is this item?" />
+        <ScrollView className="flex-1 bg-background px-4 pt-6 space-y-4">
+            <View>
+                <Text className="text-text font-semibold mb-1">Name</Text>
+                <TextInput
+                    className="bg-surface text-text rounded-md px-3 py-2"
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="What is this item?"
+                    placeholderTextColor="#9AA0A6"
+                />
+            </View>
 
-                <Text style={styles.label}>Category</Text>
-                <View style={styles.input}>
+            <View>
+                <Text className="text-text font-semibold mb-1">Category</Text>
+                <View className="bg-surface rounded-md">
                     <Picker
                         selectedValue={category}
                         onValueChange={(val) => {
                             if (val === 'new') {
-                                setShowCategoryModal(true); // 👈 open modal instead
+                                setShowCategoryModal(true);
                             } else {
                                 setCategory(val);
                             }
                         }}
+                        dropdownIconColor="#E8EAED"
+                        style={{ color: '#E8EAED' }}
                     >
                         <Picker.Item label="Select category" value="" />
                         {allCategories.map((cat) => (
@@ -143,57 +140,7 @@ export default function AddEditItemScreen() {
                         <Picker.Item label="+ Add new category" value="new" />
                     </Picker>
                 </View>
-
-
-                <Text style={styles.label}>Notes</Text>
-                <TextInput
-                    style={[styles.input, { height: 80 }]}
-                    value={notes}
-                    onChangeText={setNotes}
-                    placeholder="Optional notes or purpose"
-                    multiline
-                />
-
-                <TouchableOpacity onPress={handlePickImage} style={styles.imageButton}>
-                    <Text style={{ color: 'white' }}>{photoUri ? 'Change Image' : 'Add Image'}</Text>
-                </TouchableOpacity>
-                {photoUri && <Image source={{ uri: photoUri }} style={styles.imagePreview} />}
-
-                <Text style={styles.label}>Date Added</Text>
-                <TouchableOpacity
-                    onPress={() => setShowDatePicker(true)}
-                    style={[styles.input, { justifyContent: 'center', height: 50 }]}
-                >
-                    <Text style={{ color: 'white' }}>
-                        {new Date(dateAdded).toLocaleDateString()}
-                    </Text>
-                </TouchableOpacity>
-
-                {showDatePicker && (
-                    <DateTimePicker
-                        value={new Date(dateAdded)}
-                        mode="date"
-                        display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                        onChange={(_, selectedDate) => {
-                            setShowDatePicker(false);
-                            if (selectedDate) {
-                                setDateAdded(selectedDate.toISOString());
-                            }
-                        }}
-                    />
-                )}
-
-                <Button title="Save Item" onPress={handleSave} color="#F30A14" />
-                {isEditing && (
-                    <TouchableOpacity
-                        onPress={handleDelete}
-                        style={[styles.imageButton, { backgroundColor: 'crimson', marginTop: 16 }]}
-                    >
-                        <Text style={{ color: 'white' }}>Delete Item</Text>
-                    </TouchableOpacity>
-                )}
-
-            </ScrollView>
+            </View>
 
             <Modal
                 transparent
@@ -247,37 +194,60 @@ export default function AddEditItemScreen() {
                     </View>
                 </View>
             </Modal>
-        </>
+
+            <View>
+                <Text className="text-text font-semibold mb-1">Notes</Text>
+                <TextInput
+                    className="bg-surface text-text rounded-md px-3 py-2 h-24"
+                    value={notes}
+                    onChangeText={setNotes}
+                    multiline
+                    placeholder="Optional notes or purpose"
+                    placeholderTextColor="#9AA0A6"
+                />
+            </View>
+
+            <View>
+                <Text className="text-text font-semibold mb-1">Date Added</Text>
+                <TouchableOpacity
+                    onPress={() => setShowDatePicker(true)}
+                    className="bg-surface rounded-md px-3 py-3"
+                >
+                    <Text className="text-text">
+                        {new Date(dateAdded).toLocaleDateString()}
+                    </Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                    <DateTimePicker
+                        value={new Date(dateAdded)}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                        onChange={(_, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (selectedDate) {
+                                setDateAdded(selectedDate.toISOString());
+                            }
+                        }}
+                    />
+                )}
+            </View>
+
+            <TouchableOpacity onPress={handlePickImage} className="bg-hover rounded-md py-3 items-center">
+                <Text className="text-text">{photoUri ? 'Change Image' : 'Add Image'}</Text>
+            </TouchableOpacity>
+
+            {photoUri && <Image source={{ uri: photoUri }} className="w-full h-56 rounded-lg" />}
+
+            <TouchableOpacity onPress={handleSave} className="bg-accent rounded-md py-4 items-center">
+                <Text className="text-white font-bold text-base">Save Item</Text>
+            </TouchableOpacity>
+
+            {isEditing && (
+                <TouchableOpacity onPress={handleDelete} className="bg-red-600 rounded-md py-4 items-center">
+                    <Text className="text-white font-bold text-base">Delete Item</Text>
+                </TouchableOpacity>
+            )}
+        </ScrollView>
     );
-
 }
-
-const styles = StyleSheet.create({
-    container: {
-        padding: 16,
-        gap: 12,
-    },
-    label: {
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    input: {
-        backgroundColor: '#333',
-        padding: 10,
-        borderRadius: 8,
-        color: 'white',
-    },
-    imageButton: {
-        backgroundColor: '#555',
-        padding: 12,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    imagePreview: {
-        width: '100%',
-        height: 200,
-        marginTop: 10,
-        borderRadius: 10,
-    },
-});
 

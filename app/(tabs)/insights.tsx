@@ -1,7 +1,6 @@
-// app/(tabs)/insights.tsx
-import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
+import { View, Text } from 'react-native';
 import { getItems } from '@/utils/storage';
 import { Item } from '@/types/Item';
 
@@ -21,7 +20,6 @@ export default function InsightsScreen() {
                 setUsedCount(used.length);
                 setUnusedCount(unused.length);
 
-                // Top 3 categories of unused
                 const categoryCounts: { [category: string]: number } = {};
                 for (const item of unused) {
                     categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
@@ -32,7 +30,6 @@ export default function InsightsScreen() {
                     .map(([cat]) => cat);
                 setTopUnusedCategories(sorted);
 
-                // Oldest unused item
                 const sortedUnused = [...unused].sort(
                     (a, b) => new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime()
                 );
@@ -48,60 +45,37 @@ export default function InsightsScreen() {
     const unusedPct = 100 - usedPct;
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Usage Summary</Text>
-            <Text style={styles.stat}>Used: {usedPct}%</Text>
-            <Text style={styles.stat}>Unused: {unusedPct}%</Text>
+        <View className="flex-1 bg-background px-5 pt-6 space-y-6">
+            <Text className="text-text text-2xl font-bold">Usage Summary</Text>
 
-            <Text style={styles.section}>Top Unused Categories:</Text>
-            {topUnusedCategories.length > 0 ? (
-                topUnusedCategories.map((cat, i) => (
-                    <Text key={i} style={styles.subItem}>• {cat}</Text>
-                ))
-            ) : (
-                <Text style={styles.subItem}>No unused items yet.</Text>
-            )}
+            <View>
+                <Text className="text-subtle text-lg">Used: {usedPct}%</Text>
+                <Text className="text-subtle text-lg">Unused: {unusedPct}%</Text>
+            </View>
 
-            <Text style={styles.section}>Oldest Unused Item:</Text>
-            {oldestUnused ? (
-                <View style={styles.oldest}>
-                    <Text style={styles.subItem}>{oldestUnused.name}</Text>
-                    <Text style={styles.subItem}>Added: {new Date(oldestUnused.dateAdded).toLocaleDateString()}</Text>
-                </View>
-            ) : (
-                <Text style={styles.subItem}>No data</Text>
-            )}
+            <View>
+                <Text className="text-text text-xl font-semibold mb-2">Top Unused Categories</Text>
+                {topUnusedCategories.length > 0 ? (
+                    topUnusedCategories.map((cat, i) => (
+                        <Text key={i} className="text-subtle">• {cat}</Text>
+                    ))
+                ) : (
+                    <Text className="text-subtle">No unused items.</Text>
+                )}
+            </View>
+
+            <View>
+                <Text className="text-text text-xl font-semibold mb-2">Oldest Unused Item</Text>
+                {oldestUnused ? (
+                    <View className="bg-surface p-4 rounded-lg">
+                        <Text className="text-text font-bold">{oldestUnused.name}</Text>
+                        <Text className="text-subtle">Added: {new Date(oldestUnused.dateAdded).toLocaleDateString()}</Text>
+                    </View>
+                ) : (
+                    <Text className="text-subtle">No data</Text>
+                )}
+            </View>
         </View>
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        gap: 12,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    stat: {
-        fontSize: 18,
-        color: '#ddd',
-    },
-    section: {
-        fontSize: 20,
-        marginTop: 16,
-        color: 'white',
-    },
-    subItem: {
-        fontSize: 16,
-        color: '#aaa',
-    },
-    oldest: {
-        backgroundColor: '#111',
-        padding: 10,
-        borderRadius: 8,
-    },
-});
