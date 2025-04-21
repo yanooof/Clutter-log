@@ -12,6 +12,8 @@ import { getItems, updateItem } from '@/utils/storage';
 import { deleteItem } from '@/utils/storage';
 import { getCategories, addCategory } from '@/utils/CategoryStorage';
 import { Picker } from '@react-native-picker/picker';
+import { Modal, Pressable } from 'react-native';
+
 
 
 
@@ -31,6 +33,10 @@ export default function AddEditItemScreen() {
 
     const [isEditing, setIsEditing] = useState(false);
     const [existingItemId, setExistingItemId] = useState<string | null>(null);
+
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
+
 
     useEffect(() => {
         const loadItemIfEditing = async () => {
@@ -113,86 +119,137 @@ export default function AddEditItemScreen() {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.label}>Name</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="What is this item?" />
+        <>
+            <ScrollView contentContainerStyle={styles.container}>
+                <Text style={styles.label}>Name</Text>
+                <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="What is this item?" />
 
-            <Text style={styles.label}>Category</Text>
-            <View style={styles.input}>
-                <Picker
-                    selectedValue={category}
-                    onValueChange={(val) => {
-                        if (val === 'new') {
-                            const newCat = prompt('Enter new category'); // you can use a modal instead
-                            if (newCat) {
-                                addCategory(newCat);
-                                setAllCategories((prev) => [...prev, newCat]);
-                                setCategory(newCat);
+                <Text style={styles.label}>Category</Text>
+                <View style={styles.input}>
+                    <Picker
+                        selectedValue={category}
+                        onValueChange={(val) => {
+                            if (val === 'new') {
+                                setShowCategoryModal(true); // 👈 open modal instead
+                            } else {
+                                setCategory(val);
                             }
-                        } else {
-                            setCategory(val);
-                        }
-                    }}
-                >
-                    <Picker.Item label="Select category" value="" />
-                    {allCategories.map((cat) => (
-                        <Picker.Item key={cat} label={cat} value={cat} />
-                    ))}
-                    <Picker.Item label="+ Add new category" value="new" />
-                </Picker>
-            </View>
+                        }}
+                    >
+                        <Picker.Item label="Select category" value="" />
+                        {allCategories.map((cat) => (
+                            <Picker.Item key={cat} label={cat} value={cat} />
+                        ))}
+                        <Picker.Item label="+ Add new category" value="new" />
+                    </Picker>
+                </View>
 
 
-            <Text style={styles.label}>Notes</Text>
-            <TextInput
-                style={[styles.input, { height: 80 }]}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Optional notes or purpose"
-                multiline
-            />
-
-            <TouchableOpacity onPress={handlePickImage} style={styles.imageButton}>
-                <Text style={{ color: 'white' }}>{photoUri ? 'Change Image' : 'Add Image'}</Text>
-            </TouchableOpacity>
-            {photoUri && <Image source={{ uri: photoUri }} style={styles.imagePreview} />}
-
-            <Text style={styles.label}>Date Added</Text>
-            <TouchableOpacity
-                onPress={() => setShowDatePicker(true)}
-                style={[styles.input, { justifyContent: 'center', height: 50 }]}
-            >
-                <Text style={{ color: 'white' }}>
-                    {new Date(dateAdded).toLocaleDateString()}
-                </Text>
-            </TouchableOpacity>
-
-            {showDatePicker && (
-                <DateTimePicker
-                    value={new Date(dateAdded)}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                    onChange={(_, selectedDate) => {
-                        setShowDatePicker(false);
-                        if (selectedDate) {
-                            setDateAdded(selectedDate.toISOString());
-                        }
-                    }}
+                <Text style={styles.label}>Notes</Text>
+                <TextInput
+                    style={[styles.input, { height: 80 }]}
+                    value={notes}
+                    onChangeText={setNotes}
+                    placeholder="Optional notes or purpose"
+                    multiline
                 />
-            )}
 
-            <Button title="Save Item" onPress={handleSave} color="#F30A14" />
-            {isEditing && (
-                <TouchableOpacity
-                    onPress={handleDelete}
-                    style={[styles.imageButton, { backgroundColor: 'crimson', marginTop: 16 }]}
-                >
-                    <Text style={{ color: 'white' }}>Delete Item</Text>
+                <TouchableOpacity onPress={handlePickImage} style={styles.imageButton}>
+                    <Text style={{ color: 'white' }}>{photoUri ? 'Change Image' : 'Add Image'}</Text>
                 </TouchableOpacity>
-            )}
+                {photoUri && <Image source={{ uri: photoUri }} style={styles.imagePreview} />}
 
-        </ScrollView>
+                <Text style={styles.label}>Date Added</Text>
+                <TouchableOpacity
+                    onPress={() => setShowDatePicker(true)}
+                    style={[styles.input, { justifyContent: 'center', height: 50 }]}
+                >
+                    <Text style={{ color: 'white' }}>
+                        {new Date(dateAdded).toLocaleDateString()}
+                    </Text>
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                    <DateTimePicker
+                        value={new Date(dateAdded)}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                        onChange={(_, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (selectedDate) {
+                                setDateAdded(selectedDate.toISOString());
+                            }
+                        }}
+                    />
+                )}
+
+                <Button title="Save Item" onPress={handleSave} color="#F30A14" />
+                {isEditing && (
+                    <TouchableOpacity
+                        onPress={handleDelete}
+                        style={[styles.imageButton, { backgroundColor: 'crimson', marginTop: 16 }]}
+                    >
+                        <Text style={{ color: 'white' }}>Delete Item</Text>
+                    </TouchableOpacity>
+                )}
+
+            </ScrollView>
+
+            <Modal
+                transparent
+                animationType="fade"
+                visible={showCategoryModal}
+                onRequestClose={() => setShowCategoryModal(false)}
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#222',
+                        padding: 20,
+                        borderRadius: 10,
+                        width: '80%',
+                    }}>
+                        <Text style={{ color: 'white', fontSize: 16, marginBottom: 10 }}>Enter new category</Text>
+                        <TextInput
+                            placeholder="e.g. Bathroom, Kitchen"
+                            value={newCategoryName}
+                            onChangeText={setNewCategoryName}
+                            style={{
+                                backgroundColor: '#333',
+                                padding: 10,
+                                borderRadius: 6,
+                                color: 'white',
+                                marginBottom: 12,
+                            }}
+                        />
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                            <Pressable onPress={() => setShowCategoryModal(false)}>
+                                <Text style={{ color: '#aaa' }}>Cancel</Text>
+                            </Pressable>
+                            <Pressable
+                                onPress={() => {
+                                    if (newCategoryName.trim()) {
+                                        addCategory(newCategoryName.trim());
+                                        setAllCategories((prev) => [...new Set([...prev, newCategoryName.trim()])]);
+                                        setCategory(newCategoryName.trim());
+                                    }
+                                    setShowCategoryModal(false);
+                                    setNewCategoryName('');
+                                }}
+                            >
+                                <Text style={{ color: '#F30A14', fontWeight: 'bold' }}>Add</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        </>
     );
+
 }
 
 const styles = StyleSheet.create({
