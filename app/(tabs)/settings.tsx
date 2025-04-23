@@ -6,6 +6,8 @@ import { getItems } from '../../utils/storage';
 import { getSettings, updateSetting, Settings } from '@/utils/settingsStorage';
 import { getCategories, addCategory } from '@/utils/CategoryStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLocations, addLocation, editLocation, deleteLocation } from '@/utils/locationStorage';
+
 
 export default function SettingsScreen() {
     const [settings, setSettings] = useState<Settings>({
@@ -20,6 +22,15 @@ export default function SettingsScreen() {
     const [editCatIndex, setEditCatIndex] = useState<number | null>(null);
     const [editCatValue, setEditCatValue] = useState('');
     const [newCategoryName, setNewCategoryName] = useState('');
+
+    // Location management
+    const [showLocationModal, setShowLocationModal] = useState(false);
+    const [locations, setLocations] = useState<string[]>([]);
+    const [locationItems, setLocationItems] = useState<{ [loc: string]: number }>();
+    const [editLocIndex, setEditLocIndex] = useState<number | null>(null);
+    const [editLocValue, setEditLocValue] = useState('');
+    const [newLocationName, setNewLocationName] = useState('');
+
 
     useEffect(() => {
         const fetch = async () => {
@@ -115,6 +126,68 @@ export default function SettingsScreen() {
         setNewCategoryName('');
         await loadCategoriesWithCounts();
     };
+
+    const loadLocationsWithCounts = async () => {
+        const locList = await getLocations();
+        const items = await getItems();
+        const locCounts: { [loc: string]: number } = {};
+        locList.forEach((loc) => {
+            locCounts[loc] = items.filter((item) => item.location === loc).length;
+        });
+        setLocations(locList);
+        setLocationItems(locCounts);
+    };
+
+    useEffect(() => {
+        const fetch = async () => {
+            const saved = await getSettings();
+            setSettings(saved);
+            await loadCategoriesWithCounts();
+            await loadLocationsWithCounts();
+        };
+        fetch();
+    }, []);
+
+    const handleEditLocation = async (index: number) => {
+        const oldName = locations[index];
+        const trimmed = editLocValue.trim();
+        if (!trimmed) return;
+        if (locations.includes(trimmed)) {
+            Alert.alert('Already exists', 'That location already exists.');
+            return;
+        }
+
+        await editLocation(oldName, trimmed);
+
+        // Update all items with this location
+        const items = await getItems();
+        const updatedItems = items.map((item) =>
+            item.location === oldName ? { ...item, location: trimmed } : item
+        );
+        await AsyncStorage.setItem('CLUTTERLOG_ITEMS', JSON.stringify(updatedItems));
+
+        setEditLocIndex(null);
+        setEditLocValue('');
+        await loadLocationsWithCounts();
+    };
+
+    const handleDeleteLocation = async (index: number) => {
+        const locName = locations[index];
+        if (locationItems && locationItems[locName] > 0) return;
+        await deleteLocation(locName);
+        await loadLocationsWithCounts();
+    };
+
+    const handleAddLocation = async () => {
+        const trimmed = newLocationName.trim();
+        if (!trimmed || locations.includes(trimmed)) return;
+        await addLocation(trimmed);
+        setNewLocationName('');
+        await loadLocationsWithCounts();
+    };
+
+
+
 
     return (
         <View className="flex-1 bg-background px-6 space-y-8">
@@ -238,6 +311,98 @@ export default function SettingsScreen() {
                     </View>
                 </View>
             </Modal>
+
+            <TouchableOpacity
+                onPress={() => setShowLocationModal(true)}
+                className="bg-surface py-4 rounded-md items-center border border-border"
+            >
+                <Text className="text-accent font-bold">Manage Locations</Text>
+            </TouchableOpacity>
+
+            <Modal
+                visible={showLocationModal}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowLocationModal(false)}
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#292A2D',
+                        padding: 22,
+                        borderRadius: 16,
+                        width: '90%',
+                        maxHeight: '80%'
+                    }}>
+                        <Text className="text-text text-lg font-bold mb-3">Manage Locations</Text>
+                        <FlatList
+                            data={locations}
+                            keyExtractor={(_, i) => i.toString()}
+                            renderItem={({ item, index }) => (
+                                <View className="flex-row items-center justify-between mb-2">
+                                    {editLocIndex === index ? (
+                                        <>
+                                            <TextInput
+                                                className="bg-surface text-text px-2 py-1 rounded mr-2 flex-1"
+                                                value={editLocValue}
+                                                onChangeText={setEditLocValue}
+                                                autoFocus
+                                                onSubmitEditing={() => handleEditLocation(index)}
+                                            />
+                                            <Pressable onPress={() => handleEditLocation(index)}>
+                                                <Text className="text-accent font-bold mr-3">Save</Text>
+                                            </Pressable>
+                                            <Pressable onPress={() => { setEditLocIndex(null); setEditLocValue(''); }}>
+                                                <Text className="text-subtle">Cancel</Text>
+                                            </Pressable>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Text className="text-text flex-1">{item}</Text>
+                                            <Text className="text-subtle mr-3">{locationItems && locationItems[item] ? `${locationItems[item]} in use` : 'unused'}</Text>
+                                            <Pressable
+                                                onPress={() => { setEditLocIndex(index); setEditLocValue(item); }}
+                                            >
+                                                <Text className="text-accent font-bold mr-3">Edit</Text>
+                                            </Pressable>
+                                            <Pressable
+                                                disabled={locationItems && locationItems[item] > 0}
+                                                onPress={() => handleDeleteLocation(index)}
+                                            >
+                                                <Text className={locationItems && locationItems[item] > 0 ? 'text-subtle' : 'text-red-400 font-bold'}>Delete</Text>
+                                            </Pressable>
+                                        </>
+                                    )}
+                                </View>
+                            )}
+                        />
+                        <View className="flex-row items-center mt-4">
+                            <TextInput
+                                className="bg-surface text-text px-3 py-2 rounded flex-1"
+                                placeholder="Add new location"
+                                placeholderTextColor="#9AA0A6"
+                                value={newLocationName}
+                                onChangeText={setNewLocationName}
+                                onSubmitEditing={handleAddLocation}
+                            />
+                            <Pressable onPress={handleAddLocation}>
+                                <Text className="text-accent font-bold ml-4">Add</Text>
+                            </Pressable>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => setShowLocationModal(false)}
+                            className="mt-6 bg-accent rounded-md py-3 items-center"
+                        >
+                            <Text className="text-white font-bold">Done</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
         </View>
     );
 }
