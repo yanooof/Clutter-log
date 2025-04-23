@@ -7,6 +7,7 @@ import { Item } from '@/types/Item';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { getLocations } from '@/utils/locationStorage';
 
 export default function ItemListScreen() {
     const [allItems, setAllItems] = useState<Item[]>([]);
@@ -19,21 +20,62 @@ export default function ItemListScreen() {
     const [filterDateTo, setFilterDateTo] = useState<Date | null>(null);
     const [showDatePicker, setShowDatePicker] = useState<'from' | 'to' | null>(null);
     const [search, setSearch] = useState('');
+    const [allLocations, setAllLocations] = useState<string[]>([]);
+    const [filterLocation, setFilterLocation] = useState<string>('all');
+    const isFiltered = (
+        filterCategory !== 'all' ||
+        filterStatus !== 'all' ||
+        filterLocation !== 'all' ||
+        filterDateFrom !== null ||
+        filterDateTo !== null ||
+        search.trim() !== ''
+    );
+
+
 
     useFocusEffect(
         useCallback(() => {
             const fetchItems = async () => {
                 const savedItems = await getItems();
                 setAllItems(savedItems);
-                applyFilters(savedItems);
+                // Apply filters to the new list using current filter settings
+                applyFilters(savedItems); // <-- pass savedItems as argument
             };
             fetchItems();
-        }, [])
+        }, [
+            filterCategory,
+            filterStatus,
+            filterLocation,
+            filterDateFrom,
+            filterDateTo,
+            search,
+        ])
     );
+
 
     useEffect(() => {
         applyFilters();
-    }, [filterCategory, filterStatus, filterDateFrom, filterDateTo, search]);
+    }, [filterLocation, filterCategory, filterStatus, filterDateFrom, filterDateTo, search]);
+
+    const fetchLocations = async () => {
+        const list = await getLocations();
+        setAllLocations(list);
+    };
+
+// Call when filter modal opens
+    useEffect(() => {
+        if (showFilterModal) {
+            fetchLocations();
+        }
+    }, [showFilterModal]);
+
+// Optionally, also fetch on screen focus to always stay up to date
+    useFocusEffect(
+        useCallback(() => {
+            fetchLocations();
+        }, [])
+    );
+
 
     const applyFilters = (items = allItems) => {
         let filtered = [...items];
@@ -42,6 +84,9 @@ export default function ItemListScreen() {
         }
         if (filterStatus !== 'all') {
             filtered = filtered.filter((item) => item.usedStatus === filterStatus);
+        }
+        if (filterLocation !== 'all') {
+            filtered = filtered.filter((item) => item.location === filterLocation);
         }
         if (filterDateFrom) {
             filtered = filtered.filter((item) => new Date(item.dateAdded) >= filterDateFrom);
@@ -62,17 +107,48 @@ export default function ItemListScreen() {
 
 
 
+
+
     const renderItem = ({ item }: { item: Item }) => (
         <TouchableOpacity
-            className="bg-surface p-4 rounded-xl mb-4"
-            onPress={() => router.push(`/items/${item.id}`)}
+            className="bg-surface p-1 rounded-m mb-4"
+            onPress={() => router.push({ pathname: '/items/details', params: { id: item.id } })}
         >
-            <Text className="text-text font-bold text-lg">{item.name}</Text>
-            <Text className="text-subtle">{item.category}</Text>
-            <Text className="text-subtle">{new Date(item.dateAdded).toLocaleDateString()}</Text>
-            <Text className={`font-semibold ${item.usedStatus === 'used' ? 'text-green-400' : 'text-red-400'}`}>
-                {item.usedStatus === 'used' ? '✔ Used' : '⏱ Unused'}
-            </Text>
+            <View className="bg-surface rounded-xl px-4 py-3 mb-3">
+                {/* Top row: usage icon, name, edit icon */}
+                <View className="flex-row items-center justify-between mb-1">
+                    {/* Usage icon (left) */}
+                    <View className="mr-2">
+                        {item.usedStatus === 'used' ? (
+                            <Ionicons name="checkmark-circle" size={20} color="#34d399" />
+                        ) : (
+                            <Ionicons name="ellipse-outline" size={20} color="#F87171" />
+                        )}
+                    </View>
+                    {/* Name, flexes in the middle */}
+                    <Text className="text-text font-bold text-base flex-1">{item.name}</Text>
+                    {/* Edit icon (right) */}
+                    <TouchableOpacity
+                        onPress={() => router.push({ pathname: '/items/[id]', params: { id: item.id } })}
+                        className="ml-2"
+                    >
+                        <Ionicons name="create-outline" size={22} color="#8AB4F8" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Second row: category, location, date */}
+                <View className="flex-row items-center justify-between">
+                    <Text className="text-subtle text-xs">
+                        Category: <Text className="text-text">{item.category}</Text>
+                    </Text>
+                    <Text className="text-subtle text-xs">
+                        Location: <Text className="text-text">{item.location}</Text>
+                    </Text>
+                    <Text className="text-subtle text-xs">
+                        {new Date(item.dateAdded).toLocaleDateString()}
+                    </Text>
+                </View>
+            </View>
         </TouchableOpacity>
     );
 
@@ -91,6 +167,7 @@ export default function ItemListScreen() {
                         clearButtonMode="while-editing"
                     />
                 </View>
+
                 {/* Filter Icon */}
                 <TouchableOpacity onPress={() => setShowFilterModal(true)} className="ml-2 p-2">
                     <Ionicons name="filter-outline" size={28} color="#8AB4F8" />
@@ -129,6 +206,22 @@ export default function ItemListScreen() {
                                     ))}
                                 </Picker>
                             </View>
+
+                            <Text className="text-subtle mb-1">Location</Text>
+                            <View className="bg-surface rounded-md mb-4">
+                                <Picker
+                                    selectedValue={filterLocation}
+                                    onValueChange={setFilterLocation}
+                                    dropdownIconColor="#8AB4F8"
+                                    style={{ color: '#E8EAED' }}
+                                >
+                                    <Picker.Item label="All Locations" value="all" />
+                                    {[...new Set(allItems.map((item) => item.location).filter(Boolean))].map((loc) => (
+                                        <Picker.Item key={loc} label={loc} value={loc} />
+                                    ))}
+                                </Picker>
+                            </View>
+
 
                             <Text className="text-subtle mb-1">Status</Text>
                             <View className="bg-surface rounded-md mb-4">
@@ -183,6 +276,7 @@ export default function ItemListScreen() {
                                     onPress={() => {
                                         setFilterCategory('all');
                                         setFilterStatus('all');
+                                        setFilterLocation('all');
                                         setFilterDateFrom(null);
                                         setFilterDateTo(null);
                                         setShowFilterModal(false);
@@ -202,6 +296,24 @@ export default function ItemListScreen() {
                 </Modal>
             </View>
 
+            {isFiltered && (
+                <View className="flex-row items-center justify-between px-1 py-2 mb-2 bg-hover rounded">
+                    <Text className="text-subtle text-xs px-1">
+                        Filtered view — {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'} shown
+                    </Text>
+                    <TouchableOpacity onPress={() => {
+                        setFilterCategory('all');
+                        setFilterStatus('all');
+                        setFilterLocation('all');
+                        setFilterDateFrom(null);
+                        setFilterDateTo(null);
+                        setSearch('');
+                    }}>
+                        <Text className="text-accent text-xs font-bold px-1">Clear filters</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             <FlatList
                 data={filteredItems}
                 keyExtractor={(item) => item.id}
@@ -210,11 +322,33 @@ export default function ItemListScreen() {
             />
 
             <TouchableOpacity
-                className="absolute bottom-6 right-6 w-14 h-14 bg-accent rounded-full items-center justify-center shadow-lg"
+                style={{
+                    position: 'absolute',
+                    bottom: 24,
+                    right: 24,
+                    backgroundColor: '#A1C8FF', // lighter blue
+                    borderRadius: 16,
+                    width: 58,
+                    height: 58,
+                    shadowColor: '#000',
+                    shadowOpacity: 0.16,
+                    shadowRadius: 6,
+                    shadowOffset: { width: 0, height: 2 },
+                    elevation: 6,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
                 activeOpacity={0.85}
                 onPress={() => router.push('/items/new')}
             >
-                <Text className="text-white text-2xl">＋</Text>
+                <Text style={{
+                    color: '#202124', // main bg color
+                    fontSize: 25,      // slightly smaller
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    lineHeight: 34,    // tightly fit
+                    marginTop: 0,      // perfectly center
+                }}>＋</Text>
             </TouchableOpacity>
         </View>
     );
