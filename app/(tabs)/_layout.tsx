@@ -26,15 +26,6 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="usage"
-                options={{
-                    title: 'Usage',
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <Ionicons name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'} size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
                 name="insights"
                 options={{
                     title: 'Insights',

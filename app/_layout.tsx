@@ -17,7 +17,13 @@ export default function RootLayout() {
                 name="items/[id]"
                 options={{ headerShown: false }}
             />
+            <Stack.Screen
+                name="items/details"
+                options={{ headerShown: false }}
+            />
+
           </Stack>
+
         </SafeAreaView>
       </>
   );
