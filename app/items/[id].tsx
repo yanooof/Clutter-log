@@ -21,6 +21,8 @@ import uuid from 'react-native-uuid';
 import { getItems, saveItem, updateItem, deleteItem } from '@/utils/storage';
 import { getCategories, addCategory } from '@/utils/CategoryStorage';
 import { Item } from '@/types/Item';
+import { getLocations, addLocation } from '@/utils/locationStorage';
+
 
 export default function AddEditItemScreen() {
     const router = useRouter();
@@ -37,6 +39,11 @@ export default function AddEditItemScreen() {
     const [existingItemId, setExistingItemId] = useState<string | null>(null);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
+    const [location, setLocation] = useState('');
+    const [allLocations, setAllLocations] = useState<string[]>([]);
+    const [showLocationModal, setShowLocationModal] = useState(false);
+    const [newLocationName, setNewLocationName] = useState('');
+
 
     useEffect(() => {
         const loadItemIfEditing = async () => {
@@ -48,6 +55,7 @@ export default function AddEditItemScreen() {
                     setExistingItemId(found.id);
                     setName(found.name);
                     setCategory(found.category);
+                    setLocation(found.location);
                     setNotes(found.notes ?? '');
                     setDateAdded(found.dateAdded);
                     setPhotoUri(found.photoUri);
@@ -91,6 +99,40 @@ export default function AddEditItemScreen() {
         await fetchCategories();
     };
 
+    const fetchLocations = async () => {
+        const list = await getLocations();
+        setAllLocations(list);
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchLocations();
+        }, [])
+    );
+
+    useEffect(() => {
+        if (!showLocationModal) {
+            fetchLocations();
+        }
+    }, [showLocationModal]);
+
+    const handleAddLocation = async () => {
+        const trimmed = newLocationName.trim();
+        if (!trimmed) return;
+        if (allLocations.includes(trimmed)) {
+            Alert.alert('Already exists', 'That location already exists.');
+            return;
+        }
+        await addLocation(trimmed);
+        setLocation(trimmed);
+        setShowLocationModal(false);
+        setNewLocationName('');
+        await fetchLocations();
+    };
+
+
+
+
     const handlePickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
@@ -102,8 +144,8 @@ export default function AddEditItemScreen() {
     };
 
     const handleSave = async () => {
-        if (!name || !category) {
-            Alert.alert('Missing fields', 'Name and category are required.');
+        if (!name || !category || !location) {
+            Alert.alert('Missing fields', 'Name, category, and location are required.');
             return;
         }
 
@@ -111,6 +153,7 @@ export default function AddEditItemScreen() {
             id: existingItemId ?? uuid.v4().toString(),
             name,
             category,
+            location,
             notes,
             dateAdded,
             photoUri,
@@ -126,6 +169,7 @@ export default function AddEditItemScreen() {
 
         router.back();
     };
+
 
     const handleDelete = async () => {
         if (!existingItemId) return;
@@ -261,6 +305,90 @@ export default function AddEditItemScreen() {
                     </View>
                 </View>
             </Modal>
+
+            <View>
+                <Text className="text-text font-semibold mb-1">Location</Text>
+                <TouchableOpacity
+                    className="bg-surface rounded-md px-3 py-3 mt-1 border border-border"
+                    onPress={() => setShowLocationModal(true)}
+                    activeOpacity={0.7}
+                >
+                    <Text className={`text-text ${!location && 'text-subtle'}`}>
+                        {location || 'Select location'}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Location select & add modal */}
+            <Modal
+                transparent
+                animationType="fade"
+                visible={showLocationModal}
+                onRequestClose={() => setShowLocationModal(false)}
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#292A2D',
+                        padding: 22,
+                        borderRadius: 16,
+                        width: '90%',
+                        maxHeight: '80%'
+                    }}>
+                        <Text className="text-text text-lg font-bold mb-3">Select Location</Text>
+                        <View style={{ maxHeight: 220 }}>
+                            {allLocations.length === 0 && (
+                                <Text className="text-subtle mb-4">No locations yet.</Text>
+                            )}
+                            <FlatList
+                                data={allLocations}
+                                keyExtractor={(item) => item}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        className="py-3 px-3 rounded-md mb-1 bg-hover"
+                                        onPress={() => {
+                                            setLocation(item);
+                                            setShowLocationModal(false);
+                                        }}
+                                    >
+                                        <Text className="text-text">{item}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
+
+                        {/* Add new location row */}
+                        <View className="flex-row items-center mt-3">
+                            <TextInput
+                                className="bg-surface text-text px-3 py-2 rounded flex-1 border border-border"
+                                placeholder="Add new location"
+                                placeholderTextColor="#9AA0A6"
+                                value={newLocationName}
+                                onChangeText={setNewLocationName}
+                                onSubmitEditing={handleAddLocation}
+                            />
+                            <Pressable
+                                className="ml-3"
+                                onPress={handleAddLocation}
+                            >
+                                <Text className="text-accent font-bold">Add</Text>
+                            </Pressable>
+                        </View>
+
+                        <TouchableOpacity
+                            onPress={() => setShowLocationModal(false)}
+                            className="mt-6 bg-accent rounded-md py-3 items-center"
+                        >
+                            <Text className="text-white font-bold">Done</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
 
             <View>
                 <Text className="text-text font-semibold mb-1">Date Added</Text>
