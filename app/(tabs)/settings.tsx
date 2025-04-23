@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { View, Text, Switch, Alert, TouchableOpacity, Modal, TextInput, Pressable, FlatList } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { getItems } from '../../utils/storage';
+import { getItems } from '@/utils/storage';
 import { getSettings, updateSetting, Settings } from '@/utils/settingsStorage';
-import { getCategories, addCategory } from '@/utils/CategoryStorage';
+import { getCategories } from '@/utils/CategoryStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocations, addLocation, editLocation, deleteLocation } from '@/utils/locationStorage';
 

@@ -15,7 +15,6 @@ import {useRouter, useLocalSearchParams, useFocusEffect} from 'expo-router';
 import {useCallback, useEffect, useState} from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
 import uuid from 'react-native-uuid';
 
 import { getItems, saveItem, updateItem, deleteItem } from '@/utils/storage';
@@ -83,21 +82,6 @@ export default function AddEditItemScreen() {
             fetchCategories();
         }
     }, [showCategoryModal]);
-
-    // When adding a new category:
-    const handleAddCategory = async () => {
-        const trimmed = newCategoryName.trim();
-        if (!trimmed) return;
-        if (allCategories.includes(trimmed)) {
-            Alert.alert('Already exists', 'That category already exists.');
-            return;
-        }
-        await addCategory(trimmed);
-        setCategory(trimmed);
-        setShowCategoryModal(false);
-        setNewCategoryName('');
-        await fetchCategories();
-    };
 
     const fetchLocations = async () => {
         const list = await getLocations();
