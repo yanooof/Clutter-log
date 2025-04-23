@@ -45,7 +45,7 @@ export default function InsightsScreen() {
     const unusedPct = 100 - usedPct;
 
     return (
-        <View className="flex-1 bg-background px-5 pt-6 space-y-6">
+        <View className="flex-1 bg-background px-5 space-y-12">
             <Text className="text-text text-2xl font-bold">Usage Summary</Text>
 
             <View>

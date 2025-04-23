@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Switch, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, Switch, Alert, TouchableOpacity, Modal, TextInput, Pressable, FlatList } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { getItems } from '@/utils/storage';
+import { getItems } from '../../utils/storage';
 import { getSettings, updateSetting, Settings } from '@/utils/settingsStorage';
+import { getCategories, addCategory } from '@/utils/CategoryStorage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen() {
     const [settings, setSettings] = useState<Settings>({
@@ -11,13 +13,33 @@ export default function SettingsScreen() {
         secureModeEnabled: false,
     });
 
+    // Category management
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [categories, setCategories] = useState<string[]>([]);
+    const [categoryItems, setCategoryItems] = useState<{ [cat: string]: number }>();
+    const [editCatIndex, setEditCatIndex] = useState<number | null>(null);
+    const [editCatValue, setEditCatValue] = useState('');
+    const [newCategoryName, setNewCategoryName] = useState('');
+
     useEffect(() => {
         const fetch = async () => {
             const saved = await getSettings();
             setSettings(saved);
+            await loadCategoriesWithCounts();
         };
         fetch();
     }, []);
+
+    const loadCategoriesWithCounts = async () => {
+        const catList = await getCategories();
+        const items = await getItems();
+        const catCounts: { [cat: string]: number } = {};
+        catList.forEach((cat) => {
+            catCounts[cat] = items.filter((item) => item.category === cat).length;
+        });
+        setCategories(catList);
+        setCategoryItems(catCounts);
+    };
 
     const toggle = async (key: keyof Settings) => {
         const newVal = !settings[key];
@@ -49,8 +71,53 @@ export default function SettingsScreen() {
         });
     };
 
+    // Category Edit Logic
+    const handleEditCategory = async (index: number) => {
+        const oldName = categories[index];
+        const trimmed = editCatValue.trim();
+        if (!trimmed) return;
+        if (categories.includes(trimmed)) {
+            Alert.alert('Already exists', 'That category name already exists.');
+            return;
+        }
+
+        // Update category list
+        const newCategories = [...categories];
+        newCategories[index] = trimmed;
+        await AsyncStorage.setItem('CLUTTERLOG_CATEGORIES', JSON.stringify(newCategories));
+
+        // Update all items with this category
+        const items = await getItems();
+        const updatedItems = items.map((item) =>
+            item.category === oldName ? { ...item, category: trimmed } : item
+        );
+        await AsyncStorage.setItem('CLUTTERLOG_ITEMS', JSON.stringify(updatedItems));
+
+        setEditCatIndex(null);
+        setEditCatValue('');
+        await loadCategoriesWithCounts();
+    };
+
+    const handleDeleteCategory = async (index: number) => {
+        const catName = categories[index];
+        if (categoryItems && categoryItems[catName] > 0) return;
+        // Remove from categories
+        const newCategories = categories.filter((_, i) => i !== index);
+        await AsyncStorage.setItem('CLUTTERLOG_CATEGORIES', JSON.stringify(newCategories));
+        await loadCategoriesWithCounts();
+    };
+
+    const handleAddCategory = async () => {
+        const trimmed = newCategoryName.trim();
+        if (!trimmed || categories.includes(trimmed)) return;
+        const newCategories = [...categories, trimmed];
+        await AsyncStorage.setItem('CLUTTERLOG_CATEGORIES', JSON.stringify(newCategories));
+        setNewCategoryName('');
+        await loadCategoriesWithCounts();
+    };
+
     return (
-        <View className="flex-1 bg-background px-6 pt-6 space-y-8">
+        <View className="flex-1 bg-background px-6 space-y-8">
             <Text className="text-text text-2xl font-bold">Settings</Text>
 
             <View className="flex-row justify-between items-center">
@@ -79,6 +146,99 @@ export default function SettingsScreen() {
             >
                 <Text className="text-white font-bold">Export CSV</Text>
             </TouchableOpacity>
+
+            {/* --- Category Management --- */}
+            <TouchableOpacity
+                onPress={() => setShowCategoryModal(true)}
+                className="bg-surface py-4 rounded-md items-center border border-border mt-2"
+            >
+                <Text className="text-accent font-bold">Manage Categories</Text>
+            </TouchableOpacity>
+
+            <Modal
+                visible={showCategoryModal}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowCategoryModal(false)}
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                        backgroundColor: '#292A2D',
+                        padding: 22,
+                        borderRadius: 16,
+                        width: '90%',
+                        maxHeight: '80%'
+                    }}>
+                        <Text className="text-text text-lg font-bold mb-3">Manage Categories</Text>
+                        <FlatList
+                            data={categories}
+                            keyExtractor={(_, i) => i.toString()}
+                            renderItem={({ item, index }) => (
+                                <View className="flex-row items-center justify-between mb-2">
+                                    {editCatIndex === index ? (
+                                        <>
+                                            <TextInput
+                                                className="bg-surface text-text px-2 py-1 rounded mr-2 flex-1"
+                                                value={editCatValue}
+                                                onChangeText={setEditCatValue}
+                                                autoFocus
+                                                onSubmitEditing={() => handleEditCategory(index)}
+                                            />
+                                            <Pressable onPress={() => handleEditCategory(index)}>
+                                                <Text className="text-accent font-bold mr-3">Save</Text>
+                                            </Pressable>
+                                            <Pressable onPress={() => { setEditCatIndex(null); setEditCatValue(''); }}>
+                                                <Text className="text-subtle">Cancel</Text>
+                                            </Pressable>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Text className="text-text flex-1">{item}</Text>
+                                            <Text className="text-subtle mr-3">{categoryItems && categoryItems[item] ? `${categoryItems[item]} in use` : 'unused'}</Text>
+                                            <Pressable
+                                                onPress={() => { setEditCatIndex(index); setEditCatValue(item); }}
+                                            >
+                                                <Text className="text-accent font-bold mr-3">Edit</Text>
+                                            </Pressable>
+                                            <Pressable
+                                                disabled={categoryItems && categoryItems[item] > 0}
+                                                onPress={() => handleDeleteCategory(index)}
+                                            >
+                                                <Text className={categoryItems && categoryItems[item] > 0 ? 'text-subtle' : 'text-red-400 font-bold'}>Delete</Text>
+                                            </Pressable>
+                                        </>
+                                    )}
+                                </View>
+                            )}
+                        />
+                        <View className="flex-row items-center mt-4">
+                            <TextInput
+                                className="bg-surface text-text px-3 py-2 rounded flex-1"
+                                placeholder="Add new category"
+                                placeholderTextColor="#9AA0A6"
+                                value={newCategoryName}
+                                onChangeText={setNewCategoryName}
+                                onSubmitEditing={handleAddCategory}
+                            />
+                            <Pressable onPress={handleAddCategory}>
+                                <Text className="text-accent font-bold ml-4">Add</Text>
+                            </Pressable>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => setShowCategoryModal(false)}
+                            className="mt-6 bg-accent rounded-md py-3 items-center"
+                        >
+                            <Text className="text-white font-bold">Done</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
+

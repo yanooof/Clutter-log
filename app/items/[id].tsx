@@ -1,6 +1,18 @@
-import { View, Text, TextInput, Image, TouchableOpacity, ScrollView, Alert, Platform, Modal, Pressable } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import {
+    View,
+    Text,
+    TextInput,
+    Image,
+    TouchableOpacity,
+    ScrollView,
+    Alert,
+    Platform,
+    Modal,
+    Pressable,
+    FlatList
+} from 'react-native';
+import {useRouter, useLocalSearchParams, useFocusEffect} from 'expo-router';
+import {useCallback, useEffect, useState} from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
@@ -45,13 +57,39 @@ export default function AddEditItemScreen() {
         loadItemIfEditing();
     }, [id]);
 
+    // Function to fetch latest categories from storage
+    const fetchCategories = async () => {
+        const list = await getCategories();
+        setAllCategories(list);
+    };
+
+    // Always fetch categories when the modal opens/closes, and on mount
+    useFocusEffect(
+        useCallback(() => {
+            fetchCategories();
+        }, [])
+    );
+
     useEffect(() => {
-        const fetchCategories = async () => {
-            const list = await getCategories();
-            setAllCategories(list);
-        };
-        fetchCategories();
-    }, []);
+        if (!showCategoryModal) {
+            fetchCategories();
+        }
+    }, [showCategoryModal]);
+
+    // When adding a new category:
+    const handleAddCategory = async () => {
+        const trimmed = newCategoryName.trim();
+        if (!trimmed) return;
+        if (allCategories.includes(trimmed)) {
+            Alert.alert('Already exists', 'That category already exists.');
+            return;
+        }
+        await addCategory(trimmed);
+        setCategory(trimmed);
+        setShowCategoryModal(false);
+        setNewCategoryName('');
+        await fetchCategories();
+    };
 
     const handlePickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -119,27 +157,28 @@ export default function AddEditItemScreen() {
             </View>
 
             <View>
+                <Text className="text-text font-semibold mb-1">Notes</Text>
+                <TextInput
+                    className="bg-surface text-text rounded-md px-3 py-2 h-24"
+                    value={notes}
+                    onChangeText={setNotes}
+                    multiline
+                    placeholder="Optional notes or purpose"
+                    placeholderTextColor="#9AA0A6"
+                />
+            </View>
+
+            <View>
                 <Text className="text-text font-semibold mb-1">Category</Text>
-                <View className="bg-surface rounded-md">
-                    <Picker
-                        selectedValue={category}
-                        onValueChange={(val) => {
-                            if (val === 'new') {
-                                setShowCategoryModal(true);
-                            } else {
-                                setCategory(val);
-                            }
-                        }}
-                        dropdownIconColor="#E8EAED"
-                        style={{ color: '#E8EAED' }}
-                    >
-                        <Picker.Item label="Select category" value="" />
-                        {allCategories.map((cat) => (
-                            <Picker.Item key={cat} label={cat} value={cat} />
-                        ))}
-                        <Picker.Item label="+ Add new category" value="new" />
-                    </Picker>
-                </View>
+                <TouchableOpacity
+                    className="bg-surface rounded-md px-3 py-3 mt-1 border border-border"
+                    onPress={() => setShowCategoryModal(true)}
+                    activeOpacity={0.7}
+                >
+                    <Text className={`text-text ${!category && 'text-subtle'}`}>
+                        {category || 'Select category'}
+                    </Text>
+                </TouchableOpacity>
             </View>
 
             <Modal
@@ -155,57 +194,73 @@ export default function AddEditItemScreen() {
                     alignItems: 'center'
                 }}>
                     <View style={{
-                        backgroundColor: '#222',
-                        padding: 20,
-                        borderRadius: 10,
-                        width: '80%',
+                        backgroundColor: '#292A2D',
+                        padding: 22,
+                        borderRadius: 16,
+                        width: '90%',
+                        maxHeight: '80%'
                     }}>
-                        <Text style={{ color: 'white', fontSize: 16, marginBottom: 10 }}>Enter new category</Text>
-                        <TextInput
-                            placeholder="e.g. Bathroom, Kitchen"
-                            value={newCategoryName}
-                            onChangeText={setNewCategoryName}
-                            style={{
-                                backgroundColor: '#333',
-                                padding: 10,
-                                borderRadius: 6,
-                                color: 'white',
-                                marginBottom: 12,
-                            }}
-                        />
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-                            <Pressable onPress={() => setShowCategoryModal(false)}>
-                                <Text style={{ color: '#aaa' }}>Cancel</Text>
-                            </Pressable>
-                            <Pressable
-                                onPress={() => {
-                                    if (newCategoryName.trim()) {
-                                        addCategory(newCategoryName.trim());
-                                        setAllCategories((prev) => [...new Set([...prev, newCategoryName.trim()])]);
-                                        setCategory(newCategoryName.trim());
-                                    }
-                                    setShowCategoryModal(false);
+                        <Text className="text-text text-lg font-bold mb-3">Select Category</Text>
+                        <View style={{ maxHeight: 220 }}>
+                            {allCategories.length === 0 && (
+                                <Text className="text-subtle mb-4">No categories yet.</Text>
+                            )}
+                            <FlatList
+                                data={allCategories}
+                                keyExtractor={(item) => item}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        className="py-3 px-3 rounded-md mb-1 bg-hover"
+                                        onPress={() => {
+                                            setCategory(item);
+                                            setShowCategoryModal(false);
+                                        }}
+                                    >
+                                        <Text className="text-text">{item}</Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
+
+                        {/* Add new category row */}
+                        <View className="flex-row items-center mt-3">
+                            <TextInput
+                                className="bg-surface text-text px-3 py-2 rounded flex-1 border border-border"
+                                placeholder="Add new category"
+                                placeholderTextColor="#9AA0A6"
+                                value={newCategoryName}
+                                onChangeText={setNewCategoryName}
+                                onSubmitEditing={async () => {
+                                    const trimmed = newCategoryName.trim();
+                                    if (!trimmed || allCategories.includes(trimmed)) return;
+                                    await addCategory(trimmed);
                                     setNewCategoryName('');
+                                    await fetchCategories();
+                                }}
+                            />
+                            <Pressable
+                                className="ml-3"
+                                onPress={async () => {
+                                    const trimmed = newCategoryName.trim();
+                                    if (!trimmed || allCategories.includes(trimmed)) return;
+                                    await addCategory(trimmed);
+                                    setNewCategoryName('');
+                                    await fetchCategories();
                                 }}
                             >
-                                <Text style={{ color: '#F30A14', fontWeight: 'bold' }}>Add</Text>
+                                <Text className="text-accent font-bold">Add</Text>
                             </Pressable>
                         </View>
+
+                        <TouchableOpacity
+                            onPress={() => setShowCategoryModal(false)}
+                            className="mt-6 bg-accent rounded-md py-3 items-center"
+                        >
+                            <Text className="text-white font-bold">Done</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
-
-            <View>
-                <Text className="text-text font-semibold mb-1">Notes</Text>
-                <TextInput
-                    className="bg-surface text-text rounded-md px-3 py-2 h-24"
-                    value={notes}
-                    onChangeText={setNotes}
-                    multiline
-                    placeholder="Optional notes or purpose"
-                    placeholderTextColor="#9AA0A6"
-                />
-            </View>
 
             <View>
                 <Text className="text-text font-semibold mb-1">Date Added</Text>
@@ -222,6 +277,7 @@ export default function AddEditItemScreen() {
                         value={new Date(dateAdded)}
                         mode="date"
                         display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                        maximumDate={new Date()} // <--- Restricts calendar to today
                         onChange={(_, selectedDate) => {
                             setShowDatePicker(false);
                             if (selectedDate) {

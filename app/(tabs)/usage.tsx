@@ -12,7 +12,7 @@ export default function UsageCheckScreen() {
             const fetchOldItems = async () => {
                 const all = await getItems();
                 const now = new Date();
-                const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30;
+                const THIRTY_DAYS = 5000; // normally it would be 30 days in ms (1000 * 60 * 60 * 24 * 30), but 5000ms is used for testing.
 
                 const filtered = all.filter((item) => {
                     const added = new Date(item.dateAdded).getTime();
