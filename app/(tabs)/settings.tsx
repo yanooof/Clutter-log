@@ -32,16 +32,6 @@ export default function SettingsScreen() {
 
     const [showTips, setShowTips] = useState(false);
 
-
-    useEffect(() => {
-        const fetch = async () => {
-            const saved = await getSettings();
-            setSettings(saved);
-            await loadCategoriesWithCounts();
-        };
-        fetch();
-    }, []);
-
     const loadCategoriesWithCounts = async () => {
         const catList = await getCategories();
         const items = await getItems();
@@ -132,16 +122,7 @@ export default function SettingsScreen() {
         setLocations(locList);
         setLocationItems(locCounts);
     };
-
-    useEffect(() => {
-        const fetch = async () => {
-            const saved = await getSettings();
-            setSettings(saved);
-            await loadCategoriesWithCounts();
-            await loadLocationsWithCounts();
-        };
-        fetch();
-    }, []);
+    
 
     const handleEditLocation = async (index: number) => {
         const oldName = locations[index];
