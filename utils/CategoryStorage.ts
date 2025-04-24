@@ -10,5 +10,6 @@ export async function getCategories(): Promise<string[]> {
 export async function addCategory(newCategory: string): Promise<void> {
     const current = await getCategories();
     const updated = [...new Set([...current, newCategory])];
-    await AsyncStorage.setItem(CATEGORY_KEY, JSON.stringify(updated));
+    await AsyncStorage.setItem('CLUTTERLOG_CATEGORIES', JSON.stringify(updated));
 }
+
