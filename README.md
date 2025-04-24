@@ -1,6 +1,6 @@
 # ClutterLog
 
-A cross-platform mobile app built with Expo and React Native to log and track scattered items, habits, moods, and activities. Review your history, gain insights, and stay organized.
+A cross-platform mobile app built with Expo and React Native to log and track scattered items. Review your history, gain insights, and stay organized.
 
 ## Features
 
