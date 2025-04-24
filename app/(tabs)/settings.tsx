@@ -3,7 +3,6 @@ import { View, Text, Alert, TouchableOpacity, Modal, TextInput, Pressable, FlatL
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { getItems } from '@/utils/storage';
-import { getSettings} from '@/utils/settingsStorage';
 import { getCategories} from '@/utils/CategoryStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocations, addLocation, editLocation, deleteLocation } from '@/utils/locationStorage';
@@ -122,7 +121,7 @@ export default function SettingsScreen() {
         setLocations(locList);
         setLocationItems(locCounts);
     };
-    
+
 
     const handleEditLocation = async (index: number) => {
         const oldName = locations[index];
