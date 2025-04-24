@@ -1,50 +1,45 @@
-# Welcome to your Expo app 👋
+# ClutterLog
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A cross-platform mobile app built with Expo and React Native to log and track scattered items, habits, moods, and activities. Review your history, gain insights, and stay organized.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Add & Manage Items**: Name, category, notes, date, optional photo
+- **Usage Tracker**: Item Usage check with 30-day un-checked reminders
+- **Insights**: Aggregated stats and pie charts showing usage trends
+- **Settings**: Export data (CSV), manage categories and locations
+- **Tips (on settings screen)**: Concise modal explaining app features
+- **Persistent Storage**: AsyncStorage for offline-first data
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Project Structure
 
 ```bash
-npm run reset-project
+.
+├── app/                  # Expo Router pages & screens
+├── assets/               # default icons & images
+├── types/               # interface item
+├── utils/                # Storage 
+├── babel.config.js
+├── tailwind.config.js    # NativeWind (Tailwind CSS)
+├── package.json
+└── README.md
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Non-Default Libraries
 
-## Learn more
+- `expo-router`
+- `nativewind` (Tailwind CSS for React Native)
+- `@react-navigation/native`, `@react-navigation/bottom-tabs`, `@react-navigation/native-stack`
+- `@react-native-async-storage/async-storage`
+- `expo-image-picker`
+- `expo-file-system`
+- `@react-native-community/datetimepicker`
+- `@react-native-picker/picker`
+- `react-native-uuid`
+- `axios`
 
-To learn more about developing your project with Expo, look at the following resources:
+## Configuration
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+No additional environment variables are required. All settings are managed within the app.
 
-## Join the community
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
