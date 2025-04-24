@@ -38,8 +38,7 @@ export default function ItemListScreen() {
             const fetchItems = async () => {
                 const savedItems = await getItems();
                 setAllItems(savedItems);
-                // Apply filters to the new list using current filter settings
-                applyFilters(savedItems); // <-- pass savedItems as argument
+                applyFilters(savedItems);
             };
             fetchItems();
         }, [
@@ -52,7 +51,6 @@ export default function ItemListScreen() {
         ])
     );
 
-
     useEffect(() => {
         applyFilters();
     }, [filterLocation, filterCategory, filterStatus, filterDateFrom, filterDateTo, search]);
@@ -62,20 +60,17 @@ export default function ItemListScreen() {
         setAllLocations(list);
     };
 
-// Call when filter modal opens
     useEffect(() => {
         if (showFilterModal) {
             fetchLocations();
         }
     }, [showFilterModal]);
 
-// Optionally, also fetch on screen focus to always stay up to date
     useFocusEffect(
         useCallback(() => {
             fetchLocations();
         }, [])
     );
-
 
     const applyFilters = (items = allItems) => {
         let filtered = [...items];
@@ -106,18 +101,13 @@ export default function ItemListScreen() {
     };
 
 
-
-
-
     const renderItem = ({ item }: { item: Item }) => (
         <TouchableOpacity
             className="bg-surface p-1 rounded-m mb-4"
             onPress={() => router.push({ pathname: '/items/details', params: { id: item.id } })}
         >
             <View className="bg-surface rounded-xl px-4 py-3 mb-3">
-                {/* Top row: usage icon, name, edit icon */}
                 <View className="flex-row items-center justify-between mb-1">
-                    {/* Usage icon (left) */}
                     <View className="mr-2">
                         {item.usedStatus === 'used' ? (
                             <Ionicons name="checkmark-circle" size={20} color="#34d399" />
@@ -125,9 +115,7 @@ export default function ItemListScreen() {
                             <Ionicons name="ellipse-outline" size={20} color="#F87171" />
                         )}
                     </View>
-                    {/* Name, flexes in the middle */}
                     <Text className="text-text font-bold text-base flex-1">{item.name}</Text>
-                    {/* Edit icon (right) */}
                     <TouchableOpacity
                         onPress={() => router.push({ pathname: '/items/[id]', params: { id: item.id } })}
                         className="ml-2"
@@ -135,8 +123,6 @@ export default function ItemListScreen() {
                         <Ionicons name="create-outline" size={22} color="#8AB4F8" />
                     </TouchableOpacity>
                 </View>
-
-                {/* Second row: category, location, date */}
                 <View className="flex-row items-center justify-between">
                     <Text className="text-subtle text-xs">
                         Category: <Text className="text-text">{item.category}</Text>
@@ -155,7 +141,6 @@ export default function ItemListScreen() {
     return (
         <View className="flex-1 bg-background px-4">
             <View className="flex-row items-center justify-between mb-4 gap-2">
-                {/* Search Bar */}
                 <View className="flex-1">
                     <TextInput
                         className="bg-surface text-text px-4 py-2 rounded-md"
@@ -168,7 +153,6 @@ export default function ItemListScreen() {
                     />
                 </View>
 
-                {/* Filter Icon */}
                 <TouchableOpacity onPress={() => setShowFilterModal(true)} className="ml-2 p-2">
                     <Ionicons name="filter-outline" size={28} color="#8AB4F8" />
                 </TouchableOpacity>
@@ -253,7 +237,6 @@ export default function ItemListScreen() {
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Date pickers (hidden until selecting) */}
                             {showDatePicker && (
                                 <DateTimePicker
                                     value={showDatePicker === 'from' ? (filterDateFrom || new Date()) : (filterDateTo || new Date())}
@@ -326,7 +309,7 @@ export default function ItemListScreen() {
                     position: 'absolute',
                     bottom: 24,
                     right: 24,
-                    backgroundColor: '#A1C8FF', // lighter blue
+                    backgroundColor: '#A1C8FF',
                     borderRadius: 16,
                     width: 58,
                     height: 58,
@@ -342,12 +325,12 @@ export default function ItemListScreen() {
                 onPress={() => router.push('/items/new')}
             >
                 <Text style={{
-                    color: '#202124', // main bg color
-                    fontSize: 25,      // slightly smaller
+                    color: '#202124',
+                    fontSize: 25,
                     fontWeight: 'bold',
                     textAlign: 'center',
-                    lineHeight: 34,    // tightly fit
-                    marginTop: 0,      // perfectly center
+                    lineHeight: 34,
+                    marginTop: 0,
                 }}>＋</Text>
             </TouchableOpacity>
         </View>

@@ -87,7 +87,6 @@ export default function InsightsScreen() {
                 </Text>
             </View>
 
-            {/* Top Unused Categories */}
             <Text className="text-text text-lg font-bold uppercase text-center mb-3 mt-6" style={{ letterSpacing: 1 }}>
                 Top Unused Categories
             </Text>
@@ -107,7 +106,6 @@ export default function InsightsScreen() {
                 )}
             </View>
 
-            {/* Oldest Unused Item */}
             <Text className="text-text text-lg font-bold uppercase text-center mb-3 mt-3" style={{ letterSpacing: 1 }}>
                 Oldest Unused Item
             </Text>

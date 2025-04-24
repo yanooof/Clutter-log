@@ -24,7 +24,6 @@ import { Item } from '@/types/Item';
 import { getLocations, addLocation } from '@/utils/locationStorage';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Animated buffering dots component
 function BufferDots({ active }: { active: boolean }) {
     const [dots, setDots] = useState('');
     useEffect(() => {
@@ -194,7 +193,6 @@ export default function AddEditItemScreen() {
 
     return (
         <View className="flex-1 bg-background">
-            {/* Back button row */}
             <View className="flex-row items-center px-2 pt-7 pb-1">
                 <TouchableOpacity
                     onPress={() => router.back()}
@@ -205,20 +203,17 @@ export default function AddEditItemScreen() {
                 </TouchableOpacity>
                 <View style={{ flex: 1 }} />
             </View>
-            {/* Title */}
             <View className="w-full flex-row justify-center items-center mb-1">
                 <Text className="text-text text-xl font-extrabold uppercase tracking-wider text-center">
                     {isEditing ? 'Editing Item' : 'Add an Item'}
                 </Text>
                 <BufferDots active={saving} />
             </View>
-            {/* Subtle required note */}
             <Text className="text-subtle italic text-xs text-center mb-2">
                 * marks required entries
             </Text>
 
             <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}>
-                {/* Name */}
                 <View className="mb-6">
                     <Text className="text-text font-semibold mb-1">
                         Name <Text className="text-red-500">*</Text>
@@ -232,7 +227,6 @@ export default function AddEditItemScreen() {
                     />
                 </View>
 
-                {/* Notes */}
                 <View className="mb-6">
                     <Text className="text-text font-semibold mb-1">Notes</Text>
                     <TextInput
@@ -245,7 +239,6 @@ export default function AddEditItemScreen() {
                     />
                 </View>
 
-                {/* Category */}
                 <View className="mb-6">
                     <Text className="text-text font-semibold mb-1">
                         Category <Text className="text-red-500">*</Text>
@@ -260,7 +253,7 @@ export default function AddEditItemScreen() {
                         </Text>
                     </TouchableOpacity>
                 </View>
-                {/* Category Modal */}
+
                 <Modal
                     transparent
                     animationType="fade"
@@ -301,7 +294,7 @@ export default function AddEditItemScreen() {
                                     )}
                                 />
                             </View>
-                            {/* Add new category row */}
+
                             <View className="flex-row items-center mt-3">
                                 <TextInput
                                     className="bg-surface text-text px-3 py-2 rounded flex-1 border border-border"
@@ -330,7 +323,6 @@ export default function AddEditItemScreen() {
                     </View>
                 </Modal>
 
-                {/* Location */}
                 <View className="mb-6">
                     <Text className="text-text font-semibold mb-1">
                         Location <Text className="text-red-500">*</Text>
@@ -345,7 +337,7 @@ export default function AddEditItemScreen() {
                         </Text>
                     </TouchableOpacity>
                 </View>
-                {/* Location Modal unchanged */}
+
                 <Modal
                     transparent
                     animationType="fade"
@@ -386,7 +378,7 @@ export default function AddEditItemScreen() {
                                     )}
                                 />
                             </View>
-                            {/* Add new location row */}
+
                             <View className="flex-row items-center mt-3">
                                 <TextInput
                                     className="bg-surface text-text px-3 py-2 rounded flex-1 border border-border"
@@ -413,7 +405,6 @@ export default function AddEditItemScreen() {
                     </View>
                 </Modal>
 
-                {/* Date */}
                 <View className="mb-6">
                     <Text className="text-text font-semibold mb-1">
                         Date Added <Text className="text-red-500">*</Text>
@@ -463,7 +454,6 @@ export default function AddEditItemScreen() {
 
             </ScrollView>
 
-            {/* Save & Delete buttons at the bottom */}
             <View className="absolute bottom-0 left-0 right-0 px-4 pb-5 pt-2 bg-background">
                 <TouchableOpacity
                     onPress={handleSave}

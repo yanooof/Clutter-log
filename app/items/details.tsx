@@ -29,7 +29,6 @@ export default function DetailsScreen() {
         };
         await updateItem(updated);
         setItem(updated);
-        // No popup, just update state
     };
 
     if (!item) {
@@ -42,7 +41,6 @@ export default function DetailsScreen() {
 
     return (
         <View className="flex-1 bg-background">
-            {/* Top row: Back & Edit */}
             <View className="flex-row items-center justify-between px-4 pt-7 pb-2 bg-background z-10">
                 <TouchableOpacity
                     onPress={() => router.back()}
@@ -71,10 +69,8 @@ export default function DetailsScreen() {
                     )}
                 </View>
 
-                {/* Name */}
                 <Text className="text-text text-2xl font-bold mb-2">{item.name}</Text>
 
-                {/* Category, Location, Date - single line */}
                 <View className="flex-row items-center flex-wrap gap-2 mb-3">
                     <Text className="text-subtle bg-surface px-2 py-1 rounded-lg mr-2 mb-1">
                         Category: <Text className="text-text">{item.category}</Text>
@@ -87,13 +83,11 @@ export default function DetailsScreen() {
                     </Text>
                 </View>
 
-                {/* Notes */}
                 <Text className="text-subtle font-semibold mb-1">Notes:</Text>
                 <Text className={`mb-5 ${item.notes ? 'text-text' : 'text-subtle italic'}`}>
                     {item.notes || 'Unavailable'}
                 </Text>
 
-                {/* Usage status */}
                 <View className="flex-row items-center mb-8">
                     <Ionicons
                         name={item.usedStatus === 'used' ? 'checkmark-circle' : 'ellipse-outline'}
@@ -109,7 +103,6 @@ export default function DetailsScreen() {
                 </View>
             </ScrollView>
 
-            {/* Usage Prompt Card at Bottom */}
             <View className="bg-surface px-6 py-6 rounded-t-2xl"
                   style={{
                       position: 'absolute',

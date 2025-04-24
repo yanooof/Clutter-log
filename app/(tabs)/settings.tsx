@@ -96,7 +96,6 @@ export default function SettingsScreen() {
     const handleDeleteCategory = async (index: number) => {
         const catName = categories[index];
         if (categoryItems && categoryItems[catName] > 0) return;
-        // Remove from categories
         const newCategories = categories.filter((_, i) => i !== index);
         await AsyncStorage.setItem('CLUTTERLOG_CATEGORIES', JSON.stringify(newCategories));
         await loadCategoriesWithCounts();
@@ -134,7 +133,6 @@ export default function SettingsScreen() {
 
         await editLocation(oldName, trimmed);
 
-        // Update all items with this location
         const items = await getItems();
         const updatedItems = items.map((item) =>
             item.location === oldName ? { ...item, location: trimmed } : item
@@ -362,8 +360,6 @@ export default function SettingsScreen() {
                 </Modal>
             </View>
 
-
-            {/* Tips FAB (bottom right, floating) */}
             <TouchableOpacity
                 onPress={() => setShowTips(true)}
                 style={{
@@ -384,7 +380,6 @@ export default function SettingsScreen() {
                 <Ionicons name="bulb-outline" size={32} color="#202124" />
             </TouchableOpacity>
 
-            {/* Tips Modal */}
             <Modal
                 visible={showTips}
                 animationType="fade"
